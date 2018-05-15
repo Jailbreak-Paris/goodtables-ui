@@ -10,16 +10,16 @@ export class Form extends React.Component {
 
   // Public
 
-  constructor({source, options, validate, reportPromise}) {
-    super({source, options, validate, reportPromise})
+  constructor(props) {
+    super(props)
 
     // Set state
     this.state = {
       isSourceFile: false,
       isSchemaFile: false,
-      isLoading: !!reportPromise,
-      source: source || '',
-      options: options || {},
+      isLoading: !!this.props.reportPromise,
+      source: this.props.source || '',
+      options: this.props.options || {},
       report: null,
       error: null,
     }

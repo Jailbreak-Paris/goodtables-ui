@@ -7,8 +7,8 @@ export class MessageGroup extends React.Component {
 
   // Public
 
-  constructor({type, title, messages}) {
-    super({type, title, messages})
+  constructor(props) {
+    super(props)
     this.state = {}
   }
 
@@ -21,8 +21,8 @@ export class MessageGroup extends React.Component {
         </span>
         <hr />
         <ul>
-          {messages.map(message =>
-            <li>{message}</li>
+          {messages.map((message, index) =>
+            <li key={index}>{message}</li>
           )}
         </ul>
       </div>
