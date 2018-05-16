@@ -5,7 +5,7 @@ import {Table} from './Table'
 
 // Module API
 
-export function Report({report}) {
+export function Report({report, schema}) {
   const processedWarnings = getProcessedWarnings(report)
   const tables = getTables(report)
   return (
@@ -36,6 +36,7 @@ export function Report({report}) {
           table={table}
           tableNumber={index + 1}
           tablesCount={tables.length}
+          schema={schema}
         />
       ))}
 

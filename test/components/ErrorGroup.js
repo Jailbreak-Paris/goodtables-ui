@@ -10,15 +10,16 @@ const report = require('../../data/report.json')
 
 describe('ErrorGroup', () => {
   it('should render', () => {
-    const errorGroup = getTableErrorGroups(report.tables[0])['blank-header']
-    const result = shallow(<ErrorGroup errorGroup={errorGroup} />)
+    const table = report.tables[0]
+    const errorGroups = getTableErrorGroups(table)
+    const result = shallow(<ErrorGroup errorGroups={errorGroups} headers={table.headers} />)
     assert(result.contains('Blank Header'))
   })
 
   it('works without headers', () => {
-    const errorGroup = getTableErrorGroups(report.tables[0])['blank-header']
-    delete errorGroup.headers
-    const result = render(<ErrorGroup errorGroup={errorGroup} />)
+    const table = report.tables[0]
+    const errorGroups = getTableErrorGroups(table)
+    const result = render(<ErrorGroup errorGroups={errorGroups} headers={table.headers} />)
     assert.include(result.text(), 'Blank Header')
   })
 })

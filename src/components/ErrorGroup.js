@@ -14,64 +14,25 @@ export class ErrorGroup extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      showErrorDetails: false,
       visibleRowsCount: 10,
     }
   }
 
   render() {
-    const {errorGroup} = this.props
-    const {showErrorDetails, visibleRowsCount} = this.state
-    const errorDetails = getErrorDetails(errorGroup)
-    const showHeaders = getShowHeaders(errorDetails)
-    const description = getDescription(errorDetails)
-    const rowNumbers = getRowNumbers(errorGroup)
+    const {errorGroups, headers, schema} = this.props
+    const {visibleRowsCount} = this.state
+    const rowNumbers = Object.keys(errorGroups).length
     return (
       <div className="result">
-
-        {/* Heading */}
-        <div>
-          <span className="count">{errorGroup.count} x</span>
-          <a
-            role="button"
-            className={classNames({label: true, 'label-error': true, collapsed: !showErrorDetails})}
-            data-toggle="collapse"
-            onClick={() => this.setState({showErrorDetails: !showErrorDetails})}
-            aria-expanded="false"
-          >
-            {errorDetails.name}
-          </a>
-        </div>
-
-        {/* Error details */}
-        <div className={classNames(['collapse', {in: showErrorDetails}])}>
-          <div className="error-details">
-            {description &&
-              <div className="error-description">
-                <div dangerouslySetInnerHTML={{__html: description}} />
-              </div>
-            }
-            <div className="error-list">
-              <p className="error-list-heading">
-                The full list of error messages:
-              </p>
-              <ul>
-                {errorGroup.messages.map((message, index) =>
-                  <li key={index}>{message}</li>
-                )}
-              </ul>
-            </div>
-          </div>
-        </div>
 
         {/* Table view */}
         <div className="table-view">
           <div className="inner">
             <ErrorGroupTable
-              errorGroup={errorGroup}
+              errorGroups={errorGroups}
+              headers={headers}
+              schema={schema}
               visibleRowsCount={visibleRowsCount}
-              rowNumbers={rowNumbers}
-              showHeaders={showHeaders}
             />
           </div>
         </div>
@@ -82,7 +43,7 @@ export class ErrorGroup extends React.Component {
             onClick={() => {this.setState({visibleRowsCount: visibleRowsCount + 10})}}
             className="show-more"
           >
-            Show more <span className="icon-keyboard_arrow_down" />
+            Afficher la suite <span className="icon-keyboard_arrow_down" />
           </a>
         }
 
@@ -94,34 +55,47 @@ export class ErrorGroup extends React.Component {
 
 // Internal
 
-function ErrorGroupTable({errorGroup, visibleRowsCount, rowNumbers, showHeaders}) {
+function ErrorGroupTable({errorGroups, headers, schema, visibleRowsCount}) {
+  const rowNumbers = Object.keys(errorGroups).sort().map(key => errorGroups[key].rowNumber)  // Use ints, keys are str.
   return (
     <table className="table">
       <tbody>
-        {errorGroup.headers && showHeaders &&
+        {headers &&
           <tr className="before-fail">
             <td>1</td>
-            {errorGroup.headers.map((header, index) =>
+            {headers.map((header, index) =>
               <td key={index}>{header}</td>
             )}
           </tr>
         }
         {rowNumbers.map((rowNumber, index) => (
           (index < visibleRowsCount) &&
-            <tr className={classNames({fail: errorGroup.code.includes('row')})} key={index}>
-              <td className="result-row-index">{rowNumber || 1}</td>
-              {errorGroup.rows[rowNumber].values.map((value, innerIndex) =>
-                <td className={classNames({fail: errorGroup.rows[rowNumber].badcols.has(innerIndex + 1)})} key={innerIndex}>
-                  {value}
+            [
+              <tr key={index}>
+                <td className="result-row-index">{rowNumber || 1}</td>
+                {errorGroups[rowNumber].row.values.map((value, innerIndex) =>
+                  <td className={classNames({fail: errorGroups[rowNumber].row.badcols.has(innerIndex + 1)})}
+                    key={innerIndex}>
+                    {value}
+                  </td>
+                )}
+              </tr>,
+              <tr>
+                <td colSpan={errorGroups[rowNumber].row.values.length + 1}>
+                  <ul className="row-errors list-unstyled">
+                    {errorGroups[rowNumber].errors.map((error, index) =>
+                      <li key={index}>{renderError(headers, schema, error)}</li>
+                    )}
+                  </ul>
                 </td>
-              )}
-            </tr>
+              </tr>
+            ]
         ))}
         <tr className="after-fail">
           <td className="result-row-index">
             {rowNumbers[rowNumbers.length - 1] ? rowNumbers[rowNumbers.length - 1] + 1 : 2}
           </td>
-          {errorGroup.headers && errorGroup.headers.map((_, index) =>
+          {headers && headers.map((_, index) =>
             <td key={index} />
           )}
         </tr>
@@ -131,44 +105,28 @@ function ErrorGroupTable({errorGroup, visibleRowsCount, rowNumbers, showHeaders}
 }
 
 
-function getErrorDetails(errorGroup) {
-
-  // Get code handling legacy codes
-  let code = errorGroup.code
-  if (code === 'non-castable-value') {
-    code = 'type-or-format-error'
+function renderError(headers, schema, error) {
+  // We don't want the end user to see the actual regex, but the definition given by the table schema.
+  const columnName = headers[error["column-number"] - 1]
+  let errorElement = (
+    <details>
+      <summary>{columnName}</summary>
+      <div className="details-body">{error.message}</div>
+    </details>
+  )
+  if (error.code === "pattern-constraint") {
+    const field = schema.fields.find(field => field.name === columnName)
+    if (field && field.description) {
+      errorElement = (
+        <details>
+          <summary>{columnName} : le motif ne correspond pas à celui attendu.</summary>
+          <div className="details-body">
+            <p>{field.description}</p>
+            {field.examples && <p>Exemples : {field.examples}</p>}
+          </div>
+        </details>
+      )
+    }
   }
-
-  // Get details handling custom errors
-  let details = spec.errors[code]
-  if (!details) details = {
-    name: startCase(code),
-    type: 'custom',
-    context: 'body',
-    description: null,
-  }
-
-  return details
-}
-
-
-function getShowHeaders(errorDetails) {
-  return errorDetails.context === 'body'
-}
-
-
-function getDescription(errorDetails) {
-  let description = errorDetails.description
-  if (description) {
-    description = description.replace('{validator}', '`goodtables.yml`')
-    description = marked(description)
-  }
-  return description
-}
-
-
-function getRowNumbers(errorGroup) {
-  return Object.keys(errorGroup.rows)
-    .map(item => parseInt(item, 10) || null)
-    .sort((a, b) => a - b)
+  return errorElement
 }

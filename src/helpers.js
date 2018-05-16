@@ -1,25 +1,25 @@
 // Module API
 
+// Group errors by row number.
 export function getTableErrorGroups(table) {
   const groups = {}
   for (const error of table.errors) {
 
     // Get group
-    let group = groups[error.code]
+    let group = groups[error["row-number"]]
 
     // Create group
     if (!group) {
       group = {
-        code: error.code,
-        rows: {},
+        rowNumber: error["row-number"],
         count: 0,
-        headers: table.headers,
-        messages: [],
+        row: null,
+        errors: [],
       }
     }
 
     // Get row
-    let row = group.rows[error['row-number']]
+    let row = group.row
 
     // Create row
     if (!row) {
@@ -47,9 +47,9 @@ export function getTableErrorGroups(table) {
 
     // Save group
     group.count += 1
-    group.messages.push(error.message)
-    group.rows[error['row-number']] = row
-    groups[error.code] = group
+    group.errors.push(error)
+    group.row = row
+    groups[error['row-number']] = group
 
   }
   return groups

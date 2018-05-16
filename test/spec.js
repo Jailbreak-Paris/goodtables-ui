@@ -8,7 +8,7 @@ const spec = require('../src/spec.json')
 describe('spec', () => {
 
   it('should be up-to-date', async () => {
-    const res = await axios.get('https://raw.githubusercontent.com/frictionlessdata/data-quality-spec/master/spec.json')
+    const res = await axios.get('https://raw.githubusercontent.com/Jailbreak-Paris/data-quality-spec/french/spec-fr_FR.json')
     assert.deepEqual(spec, res.data)
   })
 
