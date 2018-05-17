@@ -1,7 +1,7 @@
 import React from 'react'
-import {Report} from './Report'
-import {MessageGroup} from './MessageGroup'
-import {merge} from '../helpers'
+import { Report } from './Report'
+import { MessageGroup } from './MessageGroup'
+import { merge } from '../helpers'
 
 
 // Module API
@@ -27,24 +27,24 @@ export class Form extends React.Component {
     // Load report
     if (this.props.reportPromise) {
       this.props.reportPromise.then(([report, schema]) => {
-        this.setState({report, schema, isLoading: false})
+        this.setState({ report, schema, isLoading: false })
       }).catch(error => {
-        this.setState({error, isLoading: false})
+        this.setState({ error, isLoading: false })
       })
     }
   }
 
   render() {
-    const {isSourceFile, isLoading} = this.state
-    const {source, options, report, error} = this.state
-    const {schemas} = this.props
+    const { isSourceFile, isLoading } = this.state
+    const { source, options, report, error } = this.state
+    const { schemas, examples } = this.props
     const onSourceTypeChange = this.onSourceTypeChange.bind(this)
     const onSourceChange = this.onSourceChange.bind(this)
     const onOptionsChange = this.onOptionsChange.bind(this)
     const onSubmit = this.onSubmit.bind(this)
     const checkOptionsControls = [
-      {key: 'blank-row', label: 'Ignore blank rows'},
-      {key: 'duplicate-row', label: 'Ignore duplicate rows'},
+      { key: 'blank-row', label: 'Ignore blank rows' },
+      { key: 'duplicate-row', label: 'Ignore duplicate rows' },
     ]
 
     return (
@@ -79,6 +79,25 @@ export class Form extends React.Component {
                 />
               }
               <small>Le jeu de données tabulaire à valider.</small>
+
+              {examples &&
+                <details>
+                  <summary>Exemples</summary>
+                  <ul>
+                    {examples.map(({ url, name }, index) =>
+                      <li key={index}>
+                        <a
+                          href={url}
+                          onClick={ev => { ev.preventDefault(); this.onExampleSelect(ev.target.href) }}
+                        >
+                          {name}
+                        </a>
+                        {url === this.state.source && " (sélectionné)"}
+                      </li>
+                    )}
+                  </ul>
+                </details>
+              }
             </div>
           </div>
         </div>
@@ -93,7 +112,7 @@ export class Form extends React.Component {
                 name="schema"
                 defaultValue={options.schema}
                 onChange={ev => onOptionsChange('schema', ev.target.value)}>
-                {schemas.map(({name, url}, index) => (
+                {schemas.map(({ name, url }, index) => (
                   <option key={index} value={url}>{name}</option>
                 ))}
               </select>
@@ -107,8 +126,8 @@ export class Form extends React.Component {
         <div className="row-submit clearfix">
           <button
             className="btn btn-primary pull-right"
-            disabled={!source.trim()}
-            onClick={ev => {ev.preventDefault(); onSubmit()}}
+            disabled={!(source instanceof File) && !source.trim()}
+            onClick={ev => { ev.preventDefault(); onSubmit() }}
           >
             Valider
           </button>
@@ -148,30 +167,34 @@ export class Form extends React.Component {
 
   // Private
 
+  onExampleSelect(url) {
+    this.setState({ source: url, isSourceFile: false })
+  }
+
   onSourceTypeChange() {
-    this.setState({isSourceFile: !this.state.isSourceFile})
+    this.setState({ isSourceFile: !this.state.isSourceFile })
     this.onSourceChange('')
   }
 
   onSourceChange(value) {
-    this.setState({source: value})
+    this.setState({ source: value })
   }
 
   onOptionsChange(key, value) {
-    const options = merge(this.state.options, {[key]: value})
+    const options = merge(this.state.options, { [key]: value })
     if (!value) delete options[key]
-    this.setState({options})
+    this.setState({ options })
   }
 
   onSubmit() {
-    const {validate} = this.props
-    const {source, options} = this.state
+    const { validate } = this.props
+    const { source, options } = this.state
     if (this._isDataPackage(source)) options.preset = 'datapackage'
-    this.setState({report: null, error: null, isLoading: true})
+    this.setState({ report: null, error: null, isLoading: true })
     validate(source, merge(options)).then(([report, schema]) => {
-      this.setState({report, schema, isLoading: false})
+      this.setState({ report, schema, isLoading: false })
     }).catch(error => {
-      this.setState({error, isLoading: false})
+      this.setState({ error, isLoading: false })
     })
   }
 
