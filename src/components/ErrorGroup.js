@@ -140,11 +140,12 @@ function renderError(error) {
 
 function renderColumnError(headers, schema, error) {
   // pattern-constraint is blacklisted because we don't want the end user to see the actual regex.
-  const columnName = headers[error["column-number"] - 1]
+  const columnName = headers[error["column-number"] - 1] || "Ligne entière"
   const field = schema.fields.find(field => field.name === columnName) || {}
+  const shortMessage = spec.errors[error.code] ? spec.errors[error.code].name : "Valeur invalide"
   return (
     <details>
-      <summary>{columnName} : {spec.errors[error.code].name}</summary>
+      <summary>{columnName} : {shortMessage}</summary>
       <div className="details-body">
         <div>
           {error.code !== "pattern-constraint" && <p>{error.message}</p>}
