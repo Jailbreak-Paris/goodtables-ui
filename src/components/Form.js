@@ -107,6 +107,7 @@ export class Form extends React.Component {
         <div className="row-submit clearfix">
           <button
             className="btn btn-primary pull-right"
+            disabled={!source.trim()}
             onClick={ev => {ev.preventDefault(); onSubmit()}}
           >
             Valider
