@@ -14,15 +14,14 @@ export function Table({table, tableNumber, tablesCount, schema}) {
     <div className={classNames({file: true, valid: table.valid, invalid: !table.valid})}>
 
       {/* Valid message */}
-      {table.valid && <p>Aucune erreur n'a été trouvée, le fichier tabulaire est valide.</p>}
+      {table.valid &&
+        <div className="alert alert-success">
+          Aucune erreur n'a été trouvée, le fichier tabulaire est valide.
+        </div>
+      }
 
       {/* Heading */}
-      {!table.valid && (
-        <div>
-          <p>{table['error-count']} erreurs ont été trouvées :</p>
-          <ErrorGroup errorGroups={errorGroups} headers={table.headers} schema={schema} />
-        </div>
-      )}
+      {!table.valid && <ErrorGroup errorGroups={errorGroups} headers={table.headers} schema={schema} />}
 
     </div>
   )

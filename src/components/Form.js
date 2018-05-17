@@ -79,25 +79,6 @@ export class Form extends React.Component {
                 />
               }
               <small>Le jeu de données tabulaire à valider.</small>
-
-              {examples &&
-                <details>
-                  <summary>Exemples</summary>
-                  <ul>
-                    {examples.map(({ url, name }, index) =>
-                      <li key={index}>
-                        <a
-                          href={url}
-                          onClick={ev => { ev.preventDefault(); this.onExampleSelect(ev.target.href) }}
-                        >
-                          {name}
-                        </a>
-                        {url === this.state.source && " (sélectionné)"}
-                      </li>
-                    )}
-                  </ul>
-                </details>
-              }
             </div>
           </div>
         </div>
@@ -110,7 +91,7 @@ export class Form extends React.Component {
               <select
                 className="form-control"
                 name="schema"
-                defaultValue={options.schema}
+                value={options.schema}
                 onChange={ev => onOptionsChange('schema', ev.target.value)}>
                 {schemas.map(({ name, url }, index) => (
                   <option key={index} value={url}>{name}</option>
@@ -124,6 +105,28 @@ export class Form extends React.Component {
         </div>
 
         <div className="row-submit clearfix">
+          {examples &&
+            <details>
+              <summary>Exemples</summary>
+              <ul>
+                {examples.map(({ url, name, schemaCode }, index) =>
+                  <li key={index}>
+                    <a
+                      href={url}
+                      onClick={ev => {
+                        ev.preventDefault()
+                        this.onExampleSelect({ source: ev.target.href, schemaCode })
+                      }}
+                    >
+                      {name}
+                    </a>
+                    {url === this.state.source && " (sélectionné)"}
+                  </li>
+                )}
+              </ul>
+            </details>
+          }
+
           <button
             className="btn btn-primary pull-right"
             disabled={!(source instanceof File) && !source.trim()}
@@ -167,8 +170,14 @@ export class Form extends React.Component {
 
   // Private
 
-  onExampleSelect(url) {
-    this.setState({ source: url, isSourceFile: false })
+  onExampleSelect({ source, schemaCode }) {
+    const schema = this.props.schemas.find(schema => schema.code === schemaCode).url
+    const options = merge(this.state.options, {schema})
+    this.setState({
+      source,
+      isSourceFile: false,
+      options,
+    }, () => { this.onSubmit() })
   }
 
   onSourceTypeChange() {
