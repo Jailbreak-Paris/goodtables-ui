@@ -27,7 +27,7 @@ export class ErrorGroup extends React.Component {
 
         {errorGroups.table && errorGroups.table.length ? (
           <div className="alert alert-danger">
-            <p style={{marginBottom: "1em"}}>Des erreurs portant sur le fichier ont été trouvées :</p>
+            <p style={{ marginBottom: "1em" }}>Des erreurs portant sur le fichier ont été trouvées :</p>
             <ul className="list-unstyled">
               {errorGroups.table.map((error, index) =>
                 <li key={index}>{renderError(error)}</li>
@@ -139,25 +139,18 @@ function renderError(error) {
 }
 
 function renderColumnError(headers, schema, error) {
-  // We don't want the end user to see the actual regex, but the definition given by the table schema.
+  // pattern-constraint is blacklisted because we don't want the end user to see the actual regex.
   const columnName = headers[error["column-number"] - 1]
-  let detailsBody = error.message
-  if (error.code === "pattern-constraint") {
-    const field = schema.fields.find(field => field.name === columnName)
-    if (field && field.description) {
-      detailsBody = (
-        <div>
-          <p>{field.description}</p>
-          {field.examples && <p>Exemples : {field.examples}</p>}
-        </div>
-      )
-    }
-  }
+  const field = schema.fields.find(field => field.name === columnName) || {}
   return (
     <details>
       <summary>{columnName} : {spec.errors[error.code].name}</summary>
       <div className="details-body">
-        {detailsBody}
+        <div>
+          {error.code !== "pattern-constraint" && <p>{error.message}</p>}
+          {field.description && <p>{field.description}</p>}
+          {field.examples && <p>Exemples de valeurs valides : {field.examples}</p>}
+        </div>
         <p><a href={`/doc/errors/${error.code}`} target="_blank">En savoir plus</a></p>
       </div>
     </details>
