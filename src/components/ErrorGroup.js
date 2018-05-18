@@ -113,14 +113,6 @@ function ErrorGroupTable({ errorGroups, headers, schema, visibleRowsCount }) {
             </tr>
           ]
         ))}
-        <tr className="after-fail">
-          <td className="result-row-index">
-            {rowNumbers[rowNumbers.length - 1] ? rowNumbers[rowNumbers.length - 1] + 1 : 2}
-          </td>
-          {headers && headers.map((_, index) =>
-            <td key={index} />
-          )}
-        </tr>
       </tbody>
     </table>
   )
