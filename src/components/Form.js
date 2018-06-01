@@ -201,7 +201,9 @@ export class Form extends React.Component {
     if (this._isDataPackage(source)) options.preset = 'datapackage'
     this.setState({ report: null, error: null, isLoading: true })
     validate(source, merge(options)).then(([report, schema]) => {
-      this.setState({ report, schema, isLoading: false })
+      this.setState({ report, schema, isLoading: false }, () => {
+        document.getElementById("report").scrollIntoView({"block": "start", "behavior": "smooth"})
+      })
     }).catch(error => {
       this.setState({ error, isLoading: false })
     })
