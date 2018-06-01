@@ -10,6 +10,7 @@ export function Report({report, schema}) {
   const tables = getTables(report)
   return (
     <div className="goodtables-ui-report">
+      <h4>Rapport d'erreurs</h4>
 
       {/* Warnings */}
       {!!processedWarnings.length &&

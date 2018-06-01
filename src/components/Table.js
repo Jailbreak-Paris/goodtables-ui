@@ -16,7 +16,7 @@ export function Table({table, tableNumber, tablesCount, schema}) {
       {/* Valid message */}
       {table.valid &&
         <div className="alert alert-success">
-          Aucune erreur n'a été trouvée, le fichier tabulaire est valide.
+          Aucune erreur n'a été trouvée, le fichier est valide !
         </div>
       }
 

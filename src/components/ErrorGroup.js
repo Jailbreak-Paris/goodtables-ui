@@ -25,26 +25,22 @@ export class ErrorGroup extends React.Component {
     return (
       <div className="result">
 
-        {errorGroups.table && errorGroups.table.length ? (
+        {errorGroups.table.length ?
           <div className="alert alert-danger">
-            <p style={{ marginBottom: "1em" }}>Des erreurs portant sur le fichier ont été trouvées :</p>
+            <p style={{ marginBottom: "1em" }}>Des erreurs portant sur la structure du fichier ont été trouvées :</p>
             <ul className="list-unstyled">
               {errorGroups.table.map((error, index) =>
                 <li key={index}>{renderError(error)}</li>
               )}
             </ul>
-          </div>
-        ) : (
-            <div className="alert alert-success">
-              Aucune erreur portant sur le fichier n'a été trouvée.
-          </div>
-          )}
+          </div> : null
+        }
 
         {/* Table view */}
-        {errorGroups.byRow && errorGroups.byRow.length ?
+        {errorGroups.byRow.length ?
           <div>
             <div className="alert alert-danger">
-              <p>Des erreurs portant sur les cellules du tableau ont été trouvées.</p>
+              <p>Des erreurs portant sur le contenu des cellules du tableau ont été trouvées :</p>
             </div>
             <div className="table-view">
               <div className="inner">

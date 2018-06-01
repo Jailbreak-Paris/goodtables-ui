@@ -159,7 +159,8 @@ export class Form extends React.Component {
         }
 
         {report &&
-          <div className="row-report">
+          <div id="report">
+            <hr />
             <Report report={report} schema={this.state.schema} />
           </div>
         }
