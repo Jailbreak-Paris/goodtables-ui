@@ -6,7 +6,7 @@ import {getTableErrorGroups, removeBaseUrl, splitFilePath} from '../helpers'
 
 // Module API
 
-export function Table({table, tableNumber, tablesCount, schema}) {
+export function Table({table, tableNumber, tablesCount, schema, schemaCode}) {
   const tableFile = removeBaseUrl(table.source)
   const splitTableFile = splitFilePath(tableFile)
   const errorGroups = getTableErrorGroups(table)
@@ -21,7 +21,9 @@ export function Table({table, tableNumber, tablesCount, schema}) {
       }
 
       {/* Heading */}
-      {!table.valid && <ErrorGroup errorGroups={errorGroups} headers={table.headers} schema={schema} />}
+      {!table.valid &&
+        <ErrorGroup errorGroups={errorGroups} headers={table.headers} schema={schema} schemaCode={schemaCode} />
+      }
 
     </div>
   )

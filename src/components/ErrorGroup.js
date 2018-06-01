@@ -7,6 +7,8 @@ const spec = require('../spec.json')
 
 // Module API
 
+const docBaseUrl = "https://git.opendatafrance.net/validata/validata-doc/blob/master/static"
+
 export class ErrorGroup extends React.Component {
 
   // Public
@@ -19,7 +21,7 @@ export class ErrorGroup extends React.Component {
   }
 
   render() {
-    const { errorGroups, headers, schema } = this.props
+    const { errorGroups, headers, schema, schemaCode } = this.props
     const { visibleRowsCount } = this.state
     const rowNumbers = Object.keys(errorGroups).length
     return (
@@ -30,7 +32,7 @@ export class ErrorGroup extends React.Component {
             <p style={{ marginBottom: "1em" }}>Des erreurs portant sur la structure du fichier ont été trouvées :</p>
             <ul className="list-unstyled">
               {errorGroups.table.map((error, index) =>
-                <li key={index}>{renderError(error)}</li>
+                <li key={index}>{renderStructureError(error)}</li>
               )}
             </ul>
           </div> : null
@@ -48,6 +50,7 @@ export class ErrorGroup extends React.Component {
                   errorGroups={errorGroups.byRow}
                   headers={headers}
                   schema={schema}
+                  schemaCode={schemaCode}
                   visibleRowsCount={visibleRowsCount}
                 />
               </div>
@@ -73,7 +76,7 @@ export class ErrorGroup extends React.Component {
 
 // Internal
 
-function ErrorGroupTable({ errorGroups, headers, schema, visibleRowsCount }) {
+function ErrorGroupTable({ errorGroups, headers, schema, schemaCode, visibleRowsCount }) {
   const rowNumbers = Object.keys(errorGroups).sort().map(key => errorGroups[key].rowNumber)  // Use ints, keys are str.
   return (
     <table className="table">
@@ -102,7 +105,7 @@ function ErrorGroupTable({ errorGroups, headers, schema, visibleRowsCount }) {
               <td colSpan={errorGroups[rowNumber].row.values.length + 1}>
                 <ul className="row-errors list-unstyled">
                   {errorGroups[rowNumber].errors.map((error, index) =>
-                    <li key={index}>{renderColumnError(headers, schema, error)}</li>
+                    <li key={index}>{renderColumnError(headers, schema, schemaCode, error)}</li>
                   )}
                 </ul>
               </td>
@@ -114,23 +117,24 @@ function ErrorGroupTable({ errorGroups, headers, schema, visibleRowsCount }) {
   )
 }
 
-function renderError(error) {
+function renderStructureError(error) {
   return (
     <details>
       <summary>{spec.errors[error.code].name}</summary>
       <div className="details-body">
         {error.message}
-        <p><a href={`/doc/errors/${error.code}`} target="_blank">En savoir plus</a></p>
+        <p><a href={`${docBaseUrl}/errors/${error.code}.md`} target="_blank">En savoir plus</a></p>
       </div>
     </details>
   )
 }
 
-function renderColumnError(headers, schema, error) {
+function renderColumnError(headers, schema, schemaCode, error) {
   // pattern-constraint is blacklisted because we don't want the end user to see the actual regex.
   const columnName = headers[error["column-number"] - 1] || "Ligne entière"
   const field = schema.fields.find(field => field.name === columnName) || {}
   const shortMessage = spec.errors[error.code] ? spec.errors[error.code].name : "Valeur invalide"
+  const anchor = field.name ? `#${field.name.toLowerCase()}` : ""
   return (
     <details>
       <summary>{columnName} : {shortMessage}</summary>
@@ -139,8 +143,13 @@ function renderColumnError(headers, schema, error) {
           {error.code !== "pattern-constraint" && <p>{error.message}</p>}
           {field.description && <p>{field.description}</p>}
           {field.examples && <p>Exemples de valeurs valides : {field.examples}</p>}
+          <p>
+            <a href={`${docBaseUrl}/schemas/${schemaCode}.md${anchor}`} target="_blank">
+              En savoir plus sur la colonne
+            </a>
+          </p>
         </div>
-        <p><a href={`/doc/errors/${error.code}`} target="_blank">En savoir plus</a></p>
+        <p><a href={`${docBaseUrl}/errors/${error.code}.md`} target="_blank">En savoir plus sur l'erreur</a></p>
       </div>
     </details>
   )

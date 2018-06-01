@@ -6,6 +6,7 @@ import { merge } from '../helpers'
 
 // Module API
 
+
 export class Form extends React.Component {
 
   // Public
@@ -13,14 +14,20 @@ export class Form extends React.Component {
   constructor(props) {
     super(props)
 
+    const options = this.props.options || {}
+    const schemaCode = options.schema
+      ? this.props.schemas.find(schema => schema.url === options.schema).code
+      : null
+
     // Set state
     this.state = {
       isSourceFile: false,
       isLoading: !!this.props.reportPromise,
       source: this.props.source || '',
-      options: this.props.options || {},
+      options,
       report: null,
       schema: null,
+      schemaCode,
       error: null,
     }
 
@@ -35,12 +42,11 @@ export class Form extends React.Component {
   }
 
   render() {
-    const { isSourceFile, isLoading } = this.state
-    const { source, options, report, error } = this.state
+    const { isSourceFile, isLoading, source, options, report, error, schema, schemaCode } = this.state
     const { schemas, examples } = this.props
     const onSourceTypeChange = this.onSourceTypeChange.bind(this)
     const onSourceChange = this.onSourceChange.bind(this)
-    const onOptionsChange = this.onOptionsChange.bind(this)
+    const onSchemaChange = this.onSchemaChange.bind(this)
     const onSubmit = this.onSubmit.bind(this)
     const checkOptionsControls = [
       { key: 'blank-row', label: 'Ignore blank rows' },
@@ -92,7 +98,7 @@ export class Form extends React.Component {
                 className="form-control"
                 name="schema"
                 value={options.schema}
-                onChange={ev => onOptionsChange('schema', ev.target.value)}>
+                onChange={ev => onSchemaChange(ev.target.value)}>
                 {schemas.map(({ name, url }, index) => (
                   <option key={index} value={url}>{name}</option>
                 ))}
@@ -120,7 +126,7 @@ export class Form extends React.Component {
                     >
                       {name}
                     </a>
-                    {url === this.state.source && " (sélectionné)"}
+                    {url === source && " (sélectionné)"}
                   </li>
                 )}
               </ul>
@@ -161,7 +167,7 @@ export class Form extends React.Component {
         {report &&
           <div id="report">
             <hr />
-            <Report report={report} schema={this.state.schema} />
+            <Report report={report} schema={schema} schemaCode={schemaCode} />
           </div>
         }
 
@@ -173,8 +179,9 @@ export class Form extends React.Component {
 
   onExampleSelect({ source, schemaCode }) {
     const schema = this.props.schemas.find(schema => schema.code === schemaCode).url
-    const options = merge(this.state.options, {schema})
+    const options = merge(this.state.options, { schema })
     this.setState({
+      schemaCode,
       source,
       isSourceFile: false,
       options,
@@ -190,10 +197,10 @@ export class Form extends React.Component {
     this.setState({ source: value })
   }
 
-  onOptionsChange(key, value) {
-    const options = merge(this.state.options, { [key]: value })
-    if (!value) delete options[key]
-    this.setState({ options })
+  onSchemaChange(schemaUrl) {
+    const schemaCode = this.props.schemas.find(schema => schema.url === schemaUrl).code
+    const options = merge(this.state.options, { schema: schemaUrl })
+    this.setState({ options, schemaCode })
   }
 
   onSubmit() {
@@ -203,7 +210,7 @@ export class Form extends React.Component {
     this.setState({ report: null, error: null, isLoading: true })
     validate(source, merge(options)).then(([report, schema]) => {
       this.setState({ report, schema, isLoading: false }, () => {
-        document.getElementById("report").scrollIntoView({"block": "start", "behavior": "smooth"})
+        document.getElementById("report").scrollIntoView({ "block": "start", "behavior": "smooth" })
       })
     }).catch(error => {
       this.setState({ error, isLoading: false })
