@@ -49,7 +49,10 @@ export class Form extends React.Component {
     } else {
       selectedExamplesUrls[schema.code] = exampleUrl
     }
-    const newState = { selectedExamplesUrls }
+    const newState = {
+      selectedExamplesUrls,
+      report: null,
+    }
     if (this.state.selectedSchemaCode === schema.code) {
       newState.source = exampleUrl
     }
