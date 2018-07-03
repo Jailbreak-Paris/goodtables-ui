@@ -7,6 +7,9 @@ import { merge } from '../helpers'
 // Module API
 
 
+const docBaseUrl = "https://git.opendatafrance.net/validata/validata-doc/blob/master/static/schemas"
+
+
 export class Form extends React.Component {
 
   // Public
@@ -15,9 +18,6 @@ export class Form extends React.Component {
     super(props)
 
     const options = this.props.options || {}
-    const schemaCode = options.schema
-      ? this.props.schemas.find(schema => schema.url === options.schema).code
-      : null
 
     // Set state
     this.state = {
@@ -25,10 +25,11 @@ export class Form extends React.Component {
       isLoading: !!this.props.reportPromise,
       source: this.props.source || '',
       options,
-      report: null,
       schema: null,
-      schemaCode,
+      report: null,
       error: null,
+      selectedExamplesUrls: {},
+      selectedSchemaCode: options.schema,
     }
 
     // Load report
@@ -41,26 +42,110 @@ export class Form extends React.Component {
     }
   }
 
+  handleExampleSelect(schema, exampleUrl) {
+    const selectedExamplesUrls = this.state.selectedExamplesUrls
+    if (exampleUrl === "no-example") {
+      delete selectedExamplesUrls[schema.code]
+    } else {
+      selectedExamplesUrls[schema.code] = exampleUrl
+    }
+    const newState = { selectedExamplesUrls }
+    if (this.state.selectedSchemaCode === schema.code) {
+      newState.source = exampleUrl
+    }
+    this.setState(newState)
+  }
+  handleSelectSchema(schemaCode) {
+    const { schemas } = this.props
+    const schema = schemas.find(schema => schema.code === schemaCode)
+    const { options } = this.state
+    options.schema = schema.url
+    this.setState({
+      selectedSchemaCode: schemaCode,
+      source: this.state.selectedExamplesUrls[schemaCode] || "",
+      report: null,
+      options,
+      schema,
+    }, () => {
+      document.getElementById("source-url-form").scrollIntoView({ "block": "start", "behavior": "smooth" })
+    })
+  }
   render() {
-    const { isSourceFile, isLoading, source, options, report, error, schema, schemaCode } = this.state
-    const { schemas, examples } = this.props
+    const { schemas } = this.props
+    return <div>
+      <div className="row">
+        {schemas.map((schema, index) =>
+          <div className="col-sm-4 col-md-3" key={index}>
+            <div className={`panel panel-${this.state.selectedSchemaCode === schema.code ? "primary" : "default"}`} style={{ height: "20em", position: "relative" }}>
+              <div className="panel-heading">
+                <h3 className="panel-title">
+                  <span style={{ marginRight: "1em" }}>{schema.name}</span>
+                  {schema.version && <span className="badge">{schema.version}</span>}
+                  {schema.todo && <span className="badge">En cours de réalisation</span>}
+                </h3>
+              </div>
+              <div className="panel-body">
+                {schema.shortDescription && <p>{schema.shortDescription}</p>}
+                {schema.specUrl &&
+                  <p>
+                    <a href={schema.specUrl} target="_blank">Spécification SCDL</a>
+                  </p>
+                }
+                {schema.todo ? null :
+                  <p>
+                    <a href={`${docBaseUrl}/${schema.code}.md`} target="_blank">Documentation</a>
+                  </p>
+                }
+                {this.renderSchemaExamples(schema)}
+                {schema.todo || this.state.selectedSchemaCode === schema.code ? null :
+                  <button className="btn btn-secondary" style={{
+                    position: "absolute",
+                    bottom: "1em",
+                    right: "1em"
+                  }} title="Valider un fichier de ce type" onClick={ev => this.handleSelectSchema(schema.code)}>
+                    Sélectionner ce schéma
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      {this.state.selectedSchemaCode &&
+        this.renderForm()
+      }
+    </div>
+  }
+  renderSchemaExamples(schema) {
+    const { examples } = this.props
+    const examplesForSchema = examples.filter(example => example.schemaCode == schema.code)
+    if (examplesForSchema.length === 0) {
+      return null
+    }
+    return <div>
+      <select className="form-control" onChange={ev => this.handleExampleSelect(schema, ev.target.value)}>
+        <option value={"no-example"}>Sélectionner un fichier d'exemple...</option>
+        {examplesForSchema.map((example, index) =>
+          <option key={index} value={example.url}>
+            {example.name}
+          </option>
+        )}
+      </select>
+    </div>
+  }
+  renderForm() {
+    const { isSourceFile, isLoading, source, options, schema, report, error } = this.state
     const onSourceTypeChange = this.onSourceTypeChange.bind(this)
     const onSourceChange = this.onSourceChange.bind(this)
-    const onSchemaChange = this.onSchemaChange.bind(this)
     const onSubmit = this.onSubmit.bind(this)
-    const checkOptionsControls = [
-      { key: 'blank-row', label: 'Ignore blank rows' },
-      { key: 'duplicate-row', label: 'Ignore duplicate rows' },
-    ]
 
     return (
-      <form className="goodtables-ui-form panel panel-default">
-
+      <form className="goodtables-ui-form panel panel-default" id="source-url-form">
         <div className="row-source">
           <div className="row">
             <div className="form-group col-md-8">
               <label htmlFor="source">Fichier tabulaire à valider</label>&nbsp;
-              [<a href="#" onClick={() => onSourceTypeChange()}>
+              [<a href="#" onClick={onSourceTypeChange}>
                 {(isSourceFile) ? 'Fournir un lien' : 'Envoyer un fichier'}
               </a>]
 
@@ -89,50 +174,7 @@ export class Form extends React.Component {
           </div>
         </div>
 
-        <div className="row-schema">
-          <div className="row">
-            <div className="form-group col-md-8">
-              <label htmlFor="schema">Schéma du <abbr title="Socle Commun des Données Locales">SCDL</abbr></label>&nbsp;
-
-              <select
-                className="form-control"
-                name="schema"
-                value={options.schema}
-                onChange={ev => onSchemaChange(ev.target.value)}>
-                {schemas.map(({ name, url }, index) => (
-                  <option key={index} value={url}>{name}</option>
-                ))}
-              </select>
-
-              <small>Le schéma à utiliser pour valider le jeu de données.</small>
-            </div>
-
-          </div>
-        </div>
-
         <div className="row-submit clearfix">
-          {examples &&
-            <details>
-              <summary>Exemples</summary>
-              <ul>
-                {examples.map(({ url, name, schemaCode }, index) =>
-                  <li key={index}>
-                    <a
-                      href={url}
-                      onClick={ev => {
-                        ev.preventDefault()
-                        this.onExampleSelect({ source: ev.target.href, schemaCode })
-                      }}
-                    >
-                      {name}
-                    </a>
-                    {url === source && " (sélectionné)"}
-                  </li>
-                )}
-              </ul>
-            </details>
-          }
-
           <button
             className="btn btn-primary pull-right"
             disabled={!(source instanceof File) && !source.trim()}
@@ -166,8 +208,7 @@ export class Form extends React.Component {
 
         {report &&
           <div id="report">
-            <hr />
-            <Report report={report} schema={schema} schemaCode={schemaCode} />
+            <Report report={report} schema={schema} />
           </div>
         }
 
@@ -177,18 +218,8 @@ export class Form extends React.Component {
 
   // Private
 
-  onExampleSelect({ source, schemaCode }) {
-    const schema = this.props.schemas.find(schema => schema.code === schemaCode).url
-    const options = merge(this.state.options, { schema })
-    this.setState({
-      schemaCode,
-      source,
-      isSourceFile: false,
-      options,
-    }, () => { this.onSubmit() })
-  }
-
-  onSourceTypeChange() {
+  onSourceTypeChange(ev) {
+    ev.preventDefault()
     this.setState({ isSourceFile: !this.state.isSourceFile })
     this.onSourceChange('')
   }
@@ -197,18 +228,12 @@ export class Form extends React.Component {
     this.setState({ source: value })
   }
 
-  onSchemaChange(schemaUrl) {
-    const schemaCode = this.props.schemas.find(schema => schema.url === schemaUrl).code
-    const options = merge(this.state.options, { schema: schemaUrl })
-    this.setState({ options, schemaCode })
-  }
-
   onSubmit() {
     const { validate } = this.props
     const { source, options } = this.state
     if (this._isDataPackage(source)) options.preset = 'datapackage'
     this.setState({ report: null, error: null, isLoading: true })
-    validate(source, merge(options)).then(([report, schema]) => {
+    validate(source, options).then(([report, schema]) => {
       this.setState({ report, schema, isLoading: false }, () => {
         document.getElementById("report").scrollIntoView({ "block": "start", "behavior": "smooth" })
       })
