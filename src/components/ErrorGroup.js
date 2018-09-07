@@ -131,7 +131,9 @@ function renderStructureError(error) {
 
 function renderColumnError(headers, schema, schemaCode, error) {
   // pattern-constraint is blacklisted because we don't want the end user to see the actual regex.
-  const columnName = headers[error["column-number"] - 1] || "Ligne entière"
+  const columnName = headers
+    ? headers[error["column-number"] - 1] || "Ligne entière"
+    : "Colonne numéro " + error["column-number"]
   const field = schema.fields.find(field => field.name === columnName) || {}
   const shortMessage = spec.errors[error.code] ? spec.errors[error.code].name : "Valeur invalide"
   const anchor = field.name ? `#${field.name.toLowerCase()}` : ""
